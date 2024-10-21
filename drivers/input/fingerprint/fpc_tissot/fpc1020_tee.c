@@ -533,8 +533,6 @@ static ssize_t compatible_all_set(struct device *dev,
 			dev_info(dev, "Enabling hardware\n");
 			(void)device_prepare(fpc1020, true);
 
-static struct kernfs_node *soc_symlink = NULL;
-
 #ifdef LINUX_CONTROL_SPI_CLK
 		(void)set_clks(fpc1020, false);
 #endif
@@ -669,6 +667,7 @@ static int fpc1020_probe(struct platform_device *pdev)
     struct device *platform_dev;
 	struct kobject *soc_kobj;
 	struct kernfs_node *devices_node, *soc_node;
+	struct kernfs_node *soc_symlink = NULL;
 
 	struct device_node *np = dev->of_node;
 	struct fpc1020_data *fpc1020 = devm_kzalloc(dev, sizeof(*fpc1020),
