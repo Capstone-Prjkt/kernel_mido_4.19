@@ -7,3 +7,8 @@ if MACH_XIAOMI_MIDO
 source "drivers/input/fingerprint/goodix_mido/Kconfig"
 source "drivers/input/fingerprint/fpc_mido/Kconfig"
 endif
+
+if MACH_XIAOMI_TISSOT
+source "drivers/input/fingerprint/goodix_tissot/Kconfig"
+source "drivers/input/fingerprint/fpc_tissot/Kconfig"
+endif
