@@ -52,21 +52,21 @@ if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
 #
 # TOOLCHAIN = the toolchain u want to use "gcc/clang"
 
-CHATID="-1001283860476"
-API_BOT="2049436092:AAFV-TxprsH_aC3_XBl-6uhgc9MToKhqUCQ"
+CHATID="-1001597724605"
+API_BOT="7249254292:AAHXrkRg5n--RTFQGzqxNxP-QOQokou_7AM"
 
 
-DEVICE="Redmi Note 4/4X"
-CODENAME="mido"
-KERNEL_NAME="FussionKernel"
+DEVICE="Mi A1"
+CODENAME="tissot"
+KERNEL_NAME="Evergreen"
 
-DEFCONFIG="vendor/mido_defconfig"
+DEFCONFIG="vendor/tissot_defconfig"
 
-AnyKernel="https://github.com/Hunter-commits/anykernel.git"
-AnyKernelbranch="master"
+AnyKernel="https://github.com/romiyusnandar/Anykernel3"
+AnyKernelbranch="tissot"
 
-HOSST="Alone's Buildbot"
-USEER="Alone0316"
+HOSST="romiz"
+USEER="ever"
 
 TOOLCHAIN="clang"
 
