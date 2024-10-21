@@ -16,6 +16,7 @@
 #include <dt-bindings/spmi/spmi.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/regulator/qcom,rpm-smd-regulator.h>
+#include <dt-bindings/clock/msm-clocks-8953.h>
 #include <dt-bindings/msm/msm-bus-ids.h>
 
 / {
@@ -26,7 +27,7 @@
 	interrupt-parent = <&wakegic>;
 
 	chosen {
-		bootargs = "core_ctl_disable_cpumask=0-7 kpti=0";
+		bootargs = "quiet boot_cpus=0,1,2,3,4,5,6,7 core_ctl_disable_cpumask=0-7 kpti=0 noirqdebug";
 	};
 
 	vendor: vendor {
@@ -46,12 +47,20 @@
 
 			fstab {
 				compatible = "android,fstab";
+			    system {
+					compatible = "android,vendor";
+					dev = "/dev/block/platform/soc/7824900.sdhci/by-name/system";
+					type = "ext4";
+					mnt_flags = "ro,barrier=1,discard,noatime,nodiratime,commit=60";
+					fsmgr_flags = "wait";
+					status = "ok";
+				};
 				vendor {
 					compatible = "android,vendor";
 					dev = "/dev/block/platform/soc/7824900.sdhci/by-name/vendor";
 					type = "ext4";
-					mnt_flags = "ro,barrier=1,discard";
-					fsmgr_flags = "wait,avb";
+					mnt_flags = "ro,barrier=1,discard,noatime,nodiratime";
+					fsmgr_flags = "wait";
 					status = "ok";
 				};
 
@@ -115,13 +124,13 @@
 			alloc-ranges = <0 0x00000000 0 0xffffffff>;
 			reusable;
 			alignment = <0 0x400000>;
-			size = <0 0x400000>;
+			size = <0 0x800000>;
 		};
 
 		adsp_mem: adsp_region@0 {
 			compatible = "shared-dma-pool";
 			reusable;
-			size = <0 0x400000>;
+			size = <0 0x800000>;
 		};
 
 		dfps_data_mem: dfps_data_mem@90000000 {
@@ -1747,7 +1756,6 @@
 			snps,is-utmi-l1-suspend;
 			snps,usb2-l1-disable;
 			snps,hird-threshold = /bits/ 8 <0x0>;
-			maximum-speed = "super-speed";
 		};
 
 		qcom,usbbam@7104000 {

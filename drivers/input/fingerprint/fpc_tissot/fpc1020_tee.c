@@ -38,7 +38,6 @@
 #include <linux/notifier.h>
 #include <linux/fb.h>
 #include <linux/mdss_io_util.h>
-#include <linux/kernfs.h> 
 
 #define FPC_TTW_HOLD_TIME 2000
 #define FP_UNLOCK_REJECTION_TIMEOUT  (FPC_TTW_HOLD_TIME - 500)
@@ -80,7 +79,7 @@ struct fpc1020_data {
 	struct pinctrl_state *pinctrl_state[ARRAY_SIZE(pctl_names)];
 	struct regulator *vreg[ARRAY_SIZE(vreg_conf)];
 
-	struct wakeup_source *ttw_wl;
+	struct wakeup_source ttw_wl;
 	int irq_gpio;
 	int rst_gpio;
 	struct mutex lock; /* To set/get exported values in sysfs */
@@ -532,7 +531,6 @@ static ssize_t compatible_all_set(struct device *dev,
 		if (of_property_read_bool(dev->of_node, "fpc,enable-on-boot")) {
 			dev_info(dev, "Enabling hardware\n");
 			(void)device_prepare(fpc1020, true);
-
 #ifdef LINUX_CONTROL_SPI_CLK
 		(void)set_clks(fpc1020, false);
 #endif
@@ -586,7 +584,7 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 	dev_err(fpc1020->dev, "%s\n", __func__);
 
 	if (atomic_read(&fpc1020->wakeup_enabled)) {
-		__pm_wakeup_event(fpc1020->ttw_wl,
+		__pm_wakeup_event(&fpc1020->ttw_wl,
 					msecs_to_jiffies(FPC_TTW_HOLD_TIME));
 	}
 
@@ -664,10 +662,6 @@ static int fpc1020_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	int rc = 0;
-    struct device *platform_dev;
-	struct kobject *soc_kobj;
-	struct kernfs_node *devices_node, *soc_node;
-	struct kernfs_node *soc_symlink = NULL;
 
 	struct device_node *np = dev->of_node;
 	struct fpc1020_data *fpc1020 = devm_kzalloc(dev, sizeof(*fpc1020),
@@ -690,32 +684,13 @@ static int fpc1020_probe(struct platform_device *pdev)
 	}
 
 	mutex_init(&fpc1020->lock);
-	fpc1020->ttw_wl = wakeup_source_register(NULL, "fpc_ttw_wl");
+	wakeup_source_init(&fpc1020->ttw_wl, "fpc_ttw_wl");
 
 	rc = sysfs_create_group(&dev->kobj, &attribute_group);
 	if (rc) {
 		dev_err(dev, "could not create sysfs\n");
 		goto exit;
 	}
-
-    if (!dev->parent || !dev->parent->parent) {
-		dev_warn(dev, "Parent platform device not found\n");
-		goto exit;
-	}
-	platform_dev = dev->parent->parent;
-	if (strcmp(kobject_name(&platform_dev->kobj), "platform")) {
-		dev_warn(dev, "Parent platform device name not matched: %s\n",
-			 kobject_name(&platform_dev->kobj));
-		goto exit;
-	}
-	devices_node = platform_dev->kobj.sd->parent;
-	soc_kobj = &dev->parent->kobj;
-	soc_node = soc_kobj->sd;
-	kernfs_get(soc_node);
-	soc_symlink = kernfs_create_link(devices_node, kobject_name(soc_kobj), soc_node);
-	kernfs_put(soc_node);
-	if (IS_ERR(soc_symlink))
-		dev_warn(dev, "Unable to create soc symlink\n");
 
 
 
@@ -736,13 +711,10 @@ static int fpc1020_remove(struct platform_device *pdev)
 {
 	struct fpc1020_data *fpc1020 = platform_get_drvdata(pdev);
 
-    if (!IS_ERR(soc_symlink))
-		kernfs_remove_by_name(soc_symlink->parent, soc_symlink->name);
-
 	fb_unregister_client(&fpc1020->fb_notifier);
 	sysfs_remove_group(&pdev->dev.kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
-	wakeup_source_unregister(fpc1020->ttw_wl);
+	wakeup_source_trash(&fpc1020->ttw_wl);
 	(void)vreg_setup(fpc1020, "vdd_ana", false);
 	(void)vreg_setup(fpc1020, "vdd_io", false);
 	(void)vreg_setup(fpc1020, "vcc_spi", false);
