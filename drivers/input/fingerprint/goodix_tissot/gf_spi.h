@@ -149,6 +149,7 @@ struct gf_dev {
 	char fb_black;
 	char wait_finger_down;
 	struct work_struct work;
+	struct wakeup_source *ttw_wl;
 
 };
 

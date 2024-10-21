@@ -554,7 +554,7 @@ static irqreturn_t gf_irq(int irq, void *handle)
 #if defined(GF_NETLINK_ENABLE)
 	struct gf_dev *gf_dev = &gf;
 	char temp = GF_NET_EVENT_IRQ;
-	__pm_wakeup_event(&fp_wakelock, msecs_to_jiffies(WAKELOCK_HOLD_TIME));
+	__pm_wakeup_event(fp_wakelock, msecs_to_jiffies(WAKELOCK_HOLD_TIME));
 	sendnlmsg(&temp);
 	if ((gf_dev->wait_finger_down == true) && (gf_dev->device_available == 1) && (gf_dev->fb_black == 1)) {
 		gf_dev->wait_finger_down = false;
@@ -874,7 +874,7 @@ static int gf_probe(struct platform_device *pdev)
 	fb_register_client(&gf_dev->notifier);
 	gf_reg_key_kernel(gf_dev);
 
-	wakeup_source_init(&fp_wakelock, "fp_wakelock");
+	gf_dev->ttw_wl = wakeup_source_register(NULL, "goodix_ttw_wl");
 
 	printk("%s %d end, status = %d\n", __func__, __LINE__, status);
 
@@ -926,7 +926,7 @@ static int gf_remove(struct platform_device *pdev)
 
 	fb_unregister_client(&gf_dev->notifier);
 	mutex_unlock(&device_list_lock);
-        wakeup_source_trash(&fp_wakelock);
+        wakeup_source_unregister(gf_dev->ttw_wl);
 	return 0;
 }
 
