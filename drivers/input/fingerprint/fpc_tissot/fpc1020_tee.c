@@ -38,6 +38,7 @@
 #include <linux/notifier.h>
 #include <linux/fb.h>
 #include <linux/mdss_io_util.h>
+#include <linux/kernfs.h> 
 
 #define FPC_TTW_HOLD_TIME 2000
 #define FP_UNLOCK_REJECTION_TIMEOUT  (FPC_TTW_HOLD_TIME - 500)
