@@ -26,14 +26,14 @@
 #include "wcd-mbhc-adc.h"
 #include <asoc/wcd-mbhc-v2-api.h>
 
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 bool is_jack_insert = false;
 #endif
 
 void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 			  struct snd_soc_jack *jack, int status, int mask)
 {
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 	if (!status && (jack->jack->type&WCD_MBHC_JACK_MASK)) {
 		 is_jack_insert = false;
 	} else if (jack->jack->type&WCD_MBHC_JACK_MASK) {
@@ -135,7 +135,7 @@ void wcd_enable_curr_micbias(const struct wcd_mbhc *mbhc,
 
 	switch (cs_mb_en) {
 	case WCD_MBHC_EN_CS:
-#ifndef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MICB_CTRL, 0);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 3);
 		/* Program Button threshold registers as per CS */
@@ -314,7 +314,7 @@ out_micb_en:
 			/* enable pullup and cs, disable mb */
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_PULLUP);
 		else {
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 			if (is_jack_insert)
 				wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_MB);
 			else
@@ -327,7 +327,7 @@ out_micb_en:
 
 		/* configure cap settings properly when micbias is disabled */
 		if (mbhc->mbhc_cb->set_cap_mode)
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 			mbhc->mbhc_cb->set_cap_mode(codec, micbias1, is_jack_insert);
 #else
 			mbhc->mbhc_cb->set_cap_mode(component, micbias1, false);
@@ -342,7 +342,7 @@ out_micb_en:
 			hphlocp_off_report(mbhc, SND_JACK_OC_HPHL);
 		clear_bit(WCD_MBHC_EVENT_PA_HPHL, &mbhc->event_state);
 		/* check if micbias is enabled */
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 		if (is_jack_insert)
 #else
 		if (micbias2)
@@ -351,7 +351,7 @@ out_micb_en:
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_MB);
 		else
 			/* Disable micbias, pullup & enable cs */
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_NONE);
 #else
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_CS);
@@ -368,7 +368,7 @@ out_micb_en:
 			hphrocp_off_report(mbhc, SND_JACK_OC_HPHR);
 		clear_bit(WCD_MBHC_EVENT_PA_HPHR, &mbhc->event_state);
 		/* check if micbias is enabled */
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 		if (is_jack_insert)
 #else
 		if (micbias2)
@@ -377,7 +377,7 @@ out_micb_en:
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_MB);
 		else
 			/* Disable micbias, pullup & enable cs */
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_NONE);
 #else
 			wcd_enable_curr_micbias(mbhc, WCD_MBHC_EN_CS);
@@ -588,7 +588,7 @@ void wcd_mbhc_hs_elec_irq(struct wcd_mbhc *mbhc, int irq_type,
 }
 EXPORT_SYMBOL(wcd_mbhc_hs_elec_irq);
 
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 extern int ext_pa_gpio;
 extern int ext_pa_status;
 #endif
@@ -605,7 +605,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		 __func__, insertion, mbhc->hph_status);
 	if (!insertion) {
 		/* Report removal */
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 		mbhc->hph_status &= ~(SND_JACK_HEADSET |
 			SND_JACK_LINEOUT |
 			SND_JACK_ANC_HEADPHONE |
@@ -655,7 +655,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		hphlocp_off_report(mbhc, SND_JACK_OC_HPHL);
 		mbhc->current_plug = MBHC_PLUG_TYPE_NONE;
 		mbhc->force_linein = false;
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 		gpio_set_value(ext_pa_gpio, 0);
 #endif
 	} else {
@@ -799,7 +799,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 				    WCD_MBHC_JACK_MASK);
 		wcd_mbhc_clr_and_turnon_hph_padac(mbhc);
 
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 		msleep(500);
 		if (ext_pa_status)
 			gpio_set_value(ext_pa_gpio, 1);
@@ -880,7 +880,7 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 			wcd_mbhc_report_plug(mbhc, 0, SND_JACK_HEADPHONE);
 		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET)
 			wcd_mbhc_report_plug(mbhc, 0, SND_JACK_HEADSET);
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 		wcd_mbhc_report_plug(mbhc, 1, SND_JACK_HEADSET);
 #else
 		wcd_mbhc_report_plug(mbhc, 1, SND_JACK_UNSUPPORTED);
@@ -1306,7 +1306,7 @@ static irqreturn_t wcd_mbhc_release_handler(int irq, void *data)
 	if (mbhc->mbhc_detection_logic == WCD_DETECTION_LEGACY &&
 		mbhc->current_plug == MBHC_PLUG_TYPE_HEADPHONE) {
 		wcd_mbhc_find_plug_and_report(mbhc, MBHC_PLUG_TYPE_HEADSET);
-#if (defined CONFIG_MACH_XIAOMI_C6) || (defined CONFIG_MACH_XIAOMI_D2)
+#if defined(CONFIG_MACH_XIAOMI_C6) || defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 		wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
 				0, WCD_MBHC_JACK_MASK);
 		msleep(100);
@@ -1858,7 +1858,7 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 	mbhc->is_btn_press = false;
 	mbhc->component = component;
 	mbhc->intr_ids = mbhc_cdc_intr_ids;
-#ifdef CONFIG_MACH_XIAOMI_D2
+#if defined(CONFIG_MACH_XIAOMI_D2) || defined(CONFIG_MACH_XIAOMI_TISSOT)
 	mbhc->impedance_detect = false;
 #else
 	mbhc->impedance_detect = impedance_det_en;
