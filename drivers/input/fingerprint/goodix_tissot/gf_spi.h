@@ -1,10 +1,15 @@
+/*
+ * driver definition for sensor driver
+ *
+ * Coypright (c) 2017 Goodix
+ */
 #ifndef __GF_SPI_H
 #define __GF_SPI_H
 
 #include <linux/types.h>
 #include <linux/notifier.h>
 /**********************************************************/
-enum FP_MODE {
+enum FP_MODE{
 	GF_IMAGE_MODE = 0,
 	GF_KEY_MODE,
 	GF_SLEEP_MODE,
@@ -13,13 +18,23 @@ enum FP_MODE {
 };
 
 #define SUPPORT_NAV_EVENT
-#if defined(SUPPORT_NAV_EVENT)
 
+#if defined(SUPPORT_NAV_EVENT)
+#define GF_NAV_INPUT_UP			KEY_UP
+#define GF_NAV_INPUT_DOWN		KEY_DOWN
+#define GF_NAV_INPUT_LEFT		KEY_LEFT
+#define GF_NAV_INPUT_RIGHT		KEY_RIGHT
+#define GF_NAV_INPUT_CLICK		KEY_VOLUMEDOWN
 #define GF_NAV_INPUT_DOUBLE_CLICK	KEY_VOLUMEUP
 #define GF_NAV_INPUT_LONG_PRESS		KEY_SEARCH
 #define GF_NAV_INPUT_HEAVY		KEY_CHAT
 #endif
 
+#define GF_KEY_INPUT_HOME		KEY_HOME
+#define GF_KEY_INPUT_MENU		KEY_MENU
+#define GF_KEY_INPUT_BACK		KEY_BACK
+#define GF_KEY_INPUT_POWER		KEY_POWER
+#define GF_KEY_INPUT_CAMERA		KEY_CAMERA
 
 #if defined(SUPPORT_NAV_EVENT)
 typedef enum gf_nav_event {
@@ -43,25 +58,17 @@ typedef enum gf_key_event {
 	GF_KEY_POWER,
 	GF_KEY_MENU,
 	GF_KEY_BACK,
-	GF_KEY_CAPTURE,
-	GF_KEY_UP,
-	GF_KEY_DOWN,
-	GF_KEY_RIGHT,
-	GF_KEY_LEFT,
-	GF_KEY_TAP,
-	GF_KEY_HEAVY,
-	GF_KEY_LONG_PRESS,
-	GF_KEY_DOUBLE_TAP
+	GF_KEY_CAMERA,
 } gf_key_event_t;
 
 struct gf_key {
 	enum gf_key_event key;
-	uint32_t value; /* key down = 1, key up = 0 */
+	uint32_t value;   /* key down = 1, key up = 0 */
 };
 
 struct gf_key_map {
-	char *name;
-	unsigned short val;
+	unsigned int type;
+	unsigned int code;
 };
 
 struct gf_ioc_chip_info {
@@ -85,9 +92,7 @@ struct gf_ioc_chip_info {
 #define GF_IOC_ENTER_SLEEP_MODE _IO(GF_IOC_MAGIC, 10)
 #define GF_IOC_GET_FW_INFO      _IOR(GF_IOC_MAGIC, 11, uint8_t)
 #define GF_IOC_REMOVE           _IO(GF_IOC_MAGIC, 12)
-#define GF_IOC_CHIP_INFO        _IOR(GF_IOC_MAGIC, 13, struct gf_ioc_chip_info)
-#define GF_IOC_ENABLE_GPIO  	_IO(GF_IOC_MAGIC, 15)
-#define GF_IOC_RELEASE_GPIO  	_IO(GF_IOC_MAGIC, 16)
+#define GF_IOC_CHIP_INFO        _IOW(GF_IOC_MAGIC, 13, struct gf_ioc_chip_info)
 
 #if defined(SUPPORT_NAV_EVENT)
 #define GF_IOC_NAV_EVENT	_IOW(GF_IOC_MAGIC, 14, gf_nav_event_t)
@@ -106,16 +111,6 @@ struct gf_ioc_chip_info {
 #define GF_NET_EVENT_FB_UNBLACK 3
 #define NETLINK_TEST 25
 
-
-#ifdef ENABLE_PINCTRL
-static const char * const pctl_names[] = {
-
-	"goodixfp_reset_reset",
-	"goodixfp_reset_active",
-	"goodixfp_irq_active",
-};
-#endif
-
 struct gf_dev {
 	dev_t devt;
 	struct list_head device_entry;
@@ -126,11 +121,6 @@ struct gf_dev {
 #endif
 	struct clk *core_clk;
 	struct clk *iface_clk;
-
-#ifdef ENABLE_PINCTRL
-	struct pinctrl *fingerprint_pinctrl;
-	struct pinctrl_state *pinctrl_state[ARRAY_SIZE(pctl_names)];
-#endif
 
 	struct input_dev *input;
 	/* buffer is NULL unless this device is open (users > 0) */
@@ -149,11 +139,9 @@ struct gf_dev {
 	char fb_black;
 	char wait_finger_down;
 	struct work_struct work;
-	struct wakeup_source *ttw_wl;
-
 };
 
-int gf_parse_dts(struct gf_dev *gf_dev);
+int gf_parse_dts(struct gf_dev* gf_dev);
 void gf_cleanup(struct gf_dev *gf_dev);
 
 int gf_power_on(struct gf_dev *gf_dev);
@@ -162,7 +150,7 @@ int gf_power_off(struct gf_dev *gf_dev);
 int gf_hw_reset(struct gf_dev *gf_dev, unsigned int delay_ms);
 int gf_irq_num(struct gf_dev *gf_dev);
 
-void sendnlmsg(char *message);
+int sendnlmsg(char *msg);
 int netlink_init(void);
 void netlink_exit(void);
 #endif /*__GF_SPI_H*/
