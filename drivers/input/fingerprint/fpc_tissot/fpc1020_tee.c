@@ -73,23 +73,23 @@ static const struct vreg_config const vreg_conf[] = {
 };
 
 struct fpc1020_data {
-	struct device *dev;
+    struct device *dev;
 
-	struct pinctrl *fingerprint_pinctrl;
-	struct pinctrl_state *pinctrl_state[ARRAY_SIZE(pctl_names)];
-	struct regulator *vreg[ARRAY_SIZE(vreg_conf)];
+    struct pinctrl *fingerprint_pinctrl;
+    struct pinctrl_state *pinctrl_state[ARRAY_SIZE(pctl_names)];
+    struct regulator *vreg[ARRAY_SIZE(vreg_conf)];
 
-	struct wakeup_source ttw_wl;
-	int irq_gpio;
-	int rst_gpio;
-	struct mutex lock; /* To set/get exported values in sysfs */
-	bool prepared;
-	bool compatible_enabled;
-	atomic_t wakeup_enabled; /* Used both in ISR and non-ISR */
-	struct notifier_block fb_notifier;
-	bool fb_black;
-	bool wait_finger_down;
-	struct work_struct work;
+    struct wakeup_source *ttw_wl;
+    int irq_gpio;
+    int rst_gpio;
+    struct mutex lock; /* To set/get exported values in sysfs */
+    bool prepared;
+    bool compatible_enabled;
+    atomic_t wakeup_enabled; /* Used both in ISR and non-ISR */
+    struct notifier_block fb_notifier;
+    bool fb_black;
+    bool wait_finger_down;
+    struct work_struct work;
 };
 
 static irqreturn_t fpc1020_irq_handler(int irq, void *handle);
@@ -684,7 +684,9 @@ static int fpc1020_probe(struct platform_device *pdev)
 	}
 
 	mutex_init(&fpc1020->lock);
-	wakeup_source_init(&fpc1020->ttw_wl, "fpc_ttw_wl");
+	fpc1020->ttw_wl = wakeup_source_register(dev, "fpc_ttw_wl");
+	if (!fpc1020->ttw_wl)
+	    return -ENOMEM;
 
 	rc = sysfs_create_group(&dev->kobj, &attribute_group);
 	if (rc) {
@@ -714,7 +716,7 @@ static int fpc1020_remove(struct platform_device *pdev)
 	fb_unregister_client(&fpc1020->fb_notifier);
 	sysfs_remove_group(&pdev->dev.kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
-	wakeup_source_trash(&fpc1020->ttw_wl);
+	wakeup_source_unregister(fpc1020->ttw_wl);
 	(void)vreg_setup(fpc1020, "vdd_ana", false);
 	(void)vreg_setup(fpc1020, "vdd_io", false);
 	(void)vreg_setup(fpc1020, "vcc_spi", false);
