@@ -12,6 +12,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/timer.h>
 #include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
@@ -69,7 +70,7 @@ static struct wakeup_source read_in_suspend_ws;
  * @device_ptr:  TTY device pointer
  * @pending_ws:  pending-data wakeup source
  * @tty_tsklt:  read tasklet
- * @buf_req_timer:  RX buffer retry timer
+ * @buf_req_ #include <linux/timer.h>:  RX buffer retry timer
  * @ch_allocated:  completion set when SMD channel is allocated
  * @pil:  Peripheral Image Loader handle
  * @edge:  SMD edge associated with port
@@ -142,10 +143,10 @@ static int is_in_reset(struct smd_tty_info *info)
 	return info->in_reset;
 }
 
-static void buf_req_retry(unsigned long param)
+static void buf_req_retry(struct timer_list *t)
 {
-	struct smd_tty_info *info = (struct smd_tty_info *)param;
-	unsigned long flags;
+	struct smd_tty_info *info = from_timer(info, t, buf_req_timer);
+  unsigned long flags;
 
 	spin_lock_irqsave(&info->reset_lock_lha2, flags);
 	if (info->is_open) {
@@ -899,8 +900,7 @@ static void smd_tty_device_init(int idx)
 	spin_lock_init(&smd_tty[idx].reset_lock_lha2);
 	spin_lock_init(&smd_tty[idx].ra_lock_lha3);
 	smd_tty[idx].is_open = 0;
-	setup_timer(&smd_tty[idx].buf_req_timer, buf_req_retry,
-			(unsigned long)&smd_tty[idx]);
+  timer_setup(&smd_tty[idx].buf_req_timer, buf_req_retry, 0);
 	init_waitqueue_head(&smd_tty[idx].ch_opened_wait_queue);
 
 	if (device_create_file(smd_tty[idx].device_ptr, &dev_attr_open_timeout))
